@@ -112,11 +112,22 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile =
-                file(localProperties.getProperty("KEYSTORE_PATH"))
-            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD")
-            keyAlias = "key0"
-            keyPassword = localProperties.getProperty("KEY_PASSWORD")
+            // Lấy đường dẫn từ local.properties (nếu code trên máy) hoặc từ biến môi trường (nếu chạy trên GitHub Actions)
+            val keystorePath =
+                localProperties.getProperty("KEYSTORE_PATH") ?: System.getenv("KEYSTORE_PATH")
+
+            // Kiểm tra an toàn (Null safety)
+            if (keystorePath != null && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = localProperties.getProperty("KEYSTORE_PASSWORD")
+                    ?: System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = localProperties.getProperty("KEY_ALIAS") ?: System.getenv("KEY_ALIAS")
+                keyPassword =
+                    localProperties.getProperty("KEY_PASSWORD") ?: System.getenv("KEY_PASSWORD")
+            } else {
+                // Báo log cho CI/CD biết là đang build bản unsigned
+                println("⚠️ Khong tim thay Keystore. Se build ban Unsigned APK.")
+            }
         }
     }
 
