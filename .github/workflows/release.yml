@@ -1,0 +1,45 @@
+name: KMP Auto Release
+
+# Chỉ chạy quy trình này khi có một Tag bắt đầu bằng chữ 'v' được đẩy lên
+on:
+  push:
+    tags:
+      - 'v*' # Ví dụ: v1.0.0, v1.1.2
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    # BẮT BUỘC: Cấp quyền cho GitHub Actions được phép tạo Release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Build ra bản Release thay vì Debug (App sẽ chạy mượt hơn, dung lượng nhẹ hơn)
+      - name: Build Android Release APK
+        run: ./gradlew :composeApp:assembleRelease
+
+      # Tự động tạo Release trên GitHub và đính kèm file APK vào đó
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          # Đường dẫn đến file APK sau khi build xong
+          files: composeApp/build/outputs/apk/release/*.apk
+          # Tự động tạo danh sách các commit đã thay đổi làm Release Notes
+          generate_release_notes: true
