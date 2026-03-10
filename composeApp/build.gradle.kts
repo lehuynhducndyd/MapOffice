@@ -98,7 +98,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0.3"
+        versionName = "1.0.4"
     }
     packaging {
         resources {
@@ -110,13 +110,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    // 1. Khối tạo cấu hình chữ ký (Vẫn giữ nguyên kiểm tra an toàn)
     signingConfigs {
         create("release") {
-            // Lấy đường dẫn từ local.properties (nếu code trên máy) hoặc từ biến môi trường (nếu chạy trên GitHub Actions)
             val keystorePath =
                 localProperties.getProperty("KEYSTORE_PATH") ?: System.getenv("KEYSTORE_PATH")
 
-            // Kiểm tra an toàn (Null safety)
             if (keystorePath != null && file(keystorePath).exists()) {
                 storeFile = file(keystorePath)
                 storePassword = localProperties.getProperty("KEYSTORE_PASSWORD")
@@ -124,21 +123,32 @@ android {
                 keyAlias = localProperties.getProperty("KEY_ALIAS") ?: System.getenv("KEY_ALIAS")
                 keyPassword =
                     localProperties.getProperty("KEY_PASSWORD") ?: System.getenv("KEY_PASSWORD")
-            } else {
-                // Báo log cho CI/CD biết là đang build bản unsigned
-                println("⚠️ Khong tim thay Keystore. Se build ban Unsigned APK.")
             }
+            // Bỏ đoạn else in ra log ở đây đi vì ta sẽ xử lý ở dưới
         }
     }
 
+// 2. Khối quy định cách build
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true // Bật Proguard/R8
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false // Bật tối ưu hóa (R8/Proguard)
+//            proguardFiles(
+//                getDefaultProguardFile("proguard-android-optimize.txt"),
+//                "proguard-rules.pro"
+//            )
+
+            // KIỂM TRA ĐIỀU KIỆN TRỰC TIẾP Ở ĐÂY
+            val keystorePath =
+                localProperties.getProperty("KEYSTORE_PATH") ?: System.getenv("KEYSTORE_PATH")
+
+            if (keystorePath != null && file(keystorePath).exists()) {
+                // Có Keystore -> Lấy chữ ký release ký vào
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                // KHÔNG có Keystore -> Gán bằng null để ép nó build bản Unsigned
+                println("⚠️ KHÔNG TÌM THẤY KEYSTORE: Sẽ xuất ra bản Release Unsigned APK.")
+                signingConfig = null
+            }
         }
     }
 }
