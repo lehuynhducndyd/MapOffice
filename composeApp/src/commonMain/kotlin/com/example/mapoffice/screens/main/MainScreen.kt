@@ -38,7 +38,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
@@ -46,6 +48,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigationevent.NavigationEventHandler
 import com.example.mapoffice.data.LoadStatus
 import com.example.mapoffice.ui_component.CurrentRoomDetail
 import com.example.mapoffice.ui_component.RoomList
@@ -60,7 +63,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class,
-    ExperimentalMaterial3ExpressiveApi::class
+    ExperimentalMaterial3ExpressiveApi::class, ExperimentalComposeUiApi::class
 )
 @Composable
 fun MainScreen(
@@ -220,6 +223,7 @@ fun MainScreen(
                 }
             }
         }
+        
         AnimatedVisibility(
             visible = addRoomPopUpOpen,
             modifier = Modifier.align(Alignment.Center).zIndex(2f).width(364.dp)
